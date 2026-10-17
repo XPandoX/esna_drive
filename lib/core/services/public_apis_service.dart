@@ -116,7 +116,7 @@ class PublicApisService {
         if (list.isNotEmpty) {
           return list.map((item) {
             return EsnaPlace(
-              id: item['place_id']?.toString() ?? UniqueKey().toString(),
+              id: item['place_id']?.toString() ?? 'place_${DateTime.now().microsecondsSinceEpoch}',
               name: _cleanDisplayName(item['display_name'] ?? cleanQuery),
               category: 'بحث الخريطة',
               location: LatLng(

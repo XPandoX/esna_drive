@@ -498,8 +498,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   void _openSearchDialog(BuildContext context, {required bool isPickup, required RideProvider rideProv, required bool isExtremeHeat}) {
     showDialog(
       context: context,
-      builder: (context) {
-        String searchQuery = '';
         List<EsnaPlace> searchResults = [];
         bool isSearching = false;
 
@@ -524,7 +522,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                         prefixIcon: Icon(Icons.search, color: AppTheme.primaryLime),
                       ),
                       onChanged: (val) async {
-                        searchQuery = val;
                         if (val.trim().length >= 2) {
                           setDialogState(() => isSearching = true);
                           final res = await PublicApisService.searchPlaces(val);

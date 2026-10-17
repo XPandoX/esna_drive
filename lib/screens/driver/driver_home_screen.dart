@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:latlong2/latlong.dart';
-import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/services/public_apis_service.dart';
 import '../../models/esna_place.dart';
 import '../../models/ride_order.dart';
 import '../../providers/driver_provider.dart';

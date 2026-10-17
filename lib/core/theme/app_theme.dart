@@ -29,12 +29,10 @@ class AppTheme {
         primary: primaryLime,
         secondary: primaryGreen,
         surface: darkSurface,
-        background: darkBg,
         error: alertRed,
         onPrimary: Colors.black,
         onSecondary: Colors.white,
         onSurface: textLight,
-        onBackground: textLight,
       ),
       textTheme: cairoText.apply(
         bodyColor: textLight,

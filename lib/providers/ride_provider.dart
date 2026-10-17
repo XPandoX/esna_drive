@@ -4,7 +4,6 @@ import 'package:latlong2/latlong.dart';
 import '../models/esna_place.dart';
 import '../models/ride_order.dart';
 import '../models/driver_bid.dart';
-import '../core/constants/app_constants.dart';
 import '../core/services/public_apis_service.dart';
 import '../core/utils/fare_calculator.dart';
 
