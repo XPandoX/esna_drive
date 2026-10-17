@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>إسنا درايف - EsnaDrive | بديل inDrive في مدينة إسنا</title>
+  <!-- Google Fonts Cairo -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  
+  <style>
+    :root {
+      --primary-lime: #A7E92F;
+      --primary-green: #2DBE60;
+      --dark-bg: #121212;
+      --dark-surface: #1E1E1E;
+      --dark-card: #282828;
+      --dark-border: #383838;
+      --text-light: #FFFFFF;
+      --text-muted: #A0A0A0;
+      --text-subtle: #707070;
+      --alert-red: #FF4D4F;
+      --warning-orange: #FAAD14;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Cairo', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: #0a0a0a;
+      color: var(--text-light);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+      padding: 10px;
+    }
+
+    /* Mobile Device Frame */
+    .mobile-frame {
+      width: 100%;
+      max-width: 430px;
+      height: 900px;
+      background: var(--dark-bg);
+      border-radius: 40px;
+      border: 8px solid #2a2a2a;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 30px rgba(167, 233, 47, 0.15);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Status Bar */
+    .status-bar {
+      height: 38px;
+      background: var(--dark-surface);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 20px;
+      font-size: 12px;
+      color: var(--text-muted);
+      z-index: 1000;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    /* App Header */
+    .app-header {
+      background: var(--dark-surface);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--dark-border);
+      z-index: 999;
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--primary-lime);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .brand-subtitle {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .role-badge {
+      background: rgba(167, 233, 47, 0.15);
+      color: var(--primary-lime);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Weather Strip (Live Open-Meteo) */
+    .weather-strip {
+      background: #1c2612;
+      border-bottom: 1px solid rgba(167, 233, 47, 0.3);
+      padding: 6px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      z-index: 998;
+    }
+
+    .weather-heat-bonus {
+      background: rgba(250, 173, 20, 0.2);
+      color: var(--warning-orange);
+      padding: 2px 8px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 10px;
+    }
+
+    /* Main View Area */
+    .view-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background: #1e1e1e;
+    }
+
+    /* Landmark Quick Bar */
+    .landmarks-bar {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      left: 10px;
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      z-index: 400;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+    .landmarks-bar::-webkit-scrollbar { display: none; }
+
+    .landmark-chip {
+      background: rgba(30, 30, 30, 0.95);
+      backdrop-filter: blur(8px);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      white-space: nowrap;
+      border: 1px solid var(--dark-border);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .landmark-chip:hover, .landmark-chip.active {
+      background: var(--primary-lime);
+      color: #000;
+      font-weight: 700;
+      border-color: var(--primary-lime);
+    }
+
+    /* Bottom Booking Card */
+    .bottom-sheet {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--dark-surface);
+      border-radius: 26px 26px 0 0;
+      padding: 16px;
+      box-shadow: 0 -10px 30px rgba(0,0,0,0.6);
+      z-index: 500;
+      transition: transform 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
+      max-height: 85%;
+      overflow-y: auto;
+    }
+
+    .sheet-handle {
+      width: 40px;
+      height: 4px;
+      background: var(--dark-border);
+      border-radius: 10px;
+      margin: 0 auto 12px auto;
+    }
+
+    .route-box {
+      background: var(--dark-card);
+      border-radius: 16px;
+      padding: 12px;
+      border: 1px solid var(--dark-border);
+      margin-bottom: 12px;
+    }
+
+    .route-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+    .route-row span {
+      font-size: 13px;
+      font-weight: 600;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .route-divider {
+      height: 1px;
+      background: var(--dark-border);
+      margin: 8px 0;
+    }
+
+    /* Category Chips */
+    .categories-row {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      scrollbar-width: none;
+    }
+    .category-card {
+      flex: 0 0 110px;
+      background: var(--dark-card);
+      border: 1.5px solid var(--dark-border);
+      border-radius: 14px;
+      padding: 8px 10px;
+      text-align: right;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .category-card.selected {
+      background: rgba(167, 233, 47, 0.15);
+      border-color: var(--primary-lime);
+    }
+    .cat-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .category-card.selected .cat-title {
+      color: var(--primary-lime);
+    }
+    .cat-sub {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* inDrive Bidding Price Box */
+    .offer-box {
+      background: var(--dark-card);
+      border-radius: 16px;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid var(--dark-border);
+      margin-bottom: 12px;
+    }
+    .price-display {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+    .price-num {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--primary-lime);
+    }
+    .price-currency {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .bump-btn {
+      background: rgba(167, 233, 47, 0.15);
+      border: 1px solid var(--primary-lime);
+      color: var(--primary-lime);
+      padding: 6px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .bump-btn:hover {
+      background: var(--primary-lime);
+      color: #000;
+    }
+
+    .main-btn {
+      width: 100%;
+      background: var(--primary-lime);
+      color: #000;
+      font-weight: 800;
+      font-size: 16px;
+      padding: 14px;
+      border-radius: 14px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 15px rgba(167, 233, 47, 0.3);
+      transition: transform 0.1s;
+    }
+    .main-btn:active {
+      transform: scale(0.98);
+    }
+
+    /* Drawer Modal */
+    .drawer-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 1100;
+      display: none;
+    }
+    .drawer {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 290px;
+      background: var(--dark-bg);
+      border-left: 1px solid var(--dark-border);
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      z-index: 1200;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+    }
+    .drawer.open {
+      transform: translateX(0);
+    }
+
+    .drawer-user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--dark-border);
+      margin-bottom: 16px;
+    }
+    .drawer-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--dark-card);
+    }
+
+    .drawer-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 8px;
+      color: var(--text-light);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .drawer-menu-item:hover, .drawer-menu-item.active {
+      background: rgba(167, 233, 47, 0.15);
+      color: var(--primary-lime);
+      font-weight: 700;
+    }
+
+    /* Modal dialog */
+    .modal-backdrop {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 1500;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-box {
+      background: var(--dark-surface);
+      border-radius: 24px;
+      padding: 20px;
+      width: 100%;
+      max-width: 360px;
+      border: 1px solid var(--dark-border);
+      text-align: center;
+    }
+
+    /* Live Bidding Screen */
+    .bidding-panel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--dark-bg);
+      z-index: 600;
+      display: none;
+      flex-direction: column;
+      padding: 16px;
+    }
+    .bid-card {
+      background: var(--dark-card);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 12px;
+      border: 1.5px solid var(--primary-lime);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      animation: fadeIn 0.4s ease;
+    }
+    .bid-card.counter {
+      border-color: var(--warning-orange);
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Driver Mode Radar Feed */
+    .driver-panel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--dark-bg);
+      z-index: 600;
+      display: none;
+      flex-direction: column;
+      padding: 16px;
+    }
+
+    /* Admin Panel */
+    .admin-panel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--dark-bg);
+      z-index: 600;
+      display: none;
+      flex-direction: column;
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    /* Pulse Radar effect */
+    .radar-pulse {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--primary-lime);
+      box-shadow: 0 0 0 0 rgba(167, 233, 47, 0.7);
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(167, 233, 47, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(167, 233, 47, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(167, 233, 47, 0); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Mobile Device Frame -->
+  <div class="mobile-frame">
+    
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <span>19:55</span>
+      <span>
+        <i class="fa-solid fa-wifi"></i>
+        <i class="fa-solid fa-battery-full" style="margin-right: 4px;"></i>
+      </span>
+    </div>
+
+    <!-- App Header -->
+    <div class="app-header">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <i class="fa-solid fa-bars" id="openDrawerBtn" style="color: var(--primary-lime); font-size: 18px; cursor: pointer;"></i>
+        <div>
+          <div class="brand-title">
+            <i class="fa-solid fa-bolt"></i>
+            <span>إسنا درايف</span>
+          </div>
+          <div class="brand-subtitle">بديل inDrive • مركز ومدينة إسنا</div>
+        </div>
+      </div>
+      <div class="role-badge" id="currentRoleBadge" onclick="toggleDrawer()">
+        <span id="roleText">وضع الراكب</span>
+        <i class="fa-solid fa-chevron-down" style="font-size: 9px;"></i>
+      </div>
+    </div>
+
+    <!-- Live Weather Bar (Open-Meteo API) -->
+    <div class="weather-strip" id="weatherBar">
+      <div style="display: flex; align-items: center; gap: 6px;">
+        <i class="fa-solid fa-sun" style="color: var(--warning-orange);"></i>
+        <span id="weatherText">طقس إسنا الحي: 24.8°م • معتدل</span>
+      </div>
+      <span class="weather-heat-bonus" id="heatBonusBadge" style="display:none;">+5 ج.م حافز حرارة للكابتن</span>
+    </div>
+
+    <!-- Main View (Map & Booking) -->
+    <div class="view-container">
+      
+      <!-- Leaflet Live Map of Esna -->
+      <div id="map"></div>
+
+      <!-- Quick 10 Esna Landmarks Bar -->
+      <div class="landmarks-bar" id="landmarksBar">
+        <!-- Rendered by JS -->
+      </div>
+
+      <!-- Bottom Booking Sheet -->
+      <div class="bottom-sheet" id="bookingSheet">
+        <div class="sheet-handle"></div>
+
+        <!-- Route Box -->
+        <div class="route-box">
+          <div class="route-row" onclick="pickLocationPrompt(true)">
+            <i class="fa-solid fa-circle" style="color: var(--primary-lime); font-size: 10px;"></i>
+            <span id="pickupLabel">معبد إسنا (معبد خنوم) - وسط البلد</span>
+            <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted); font-size: 12px;"></i>
+          </div>
+          <div class="route-divider"></div>
+          <div class="route-row" onclick="pickLocationPrompt(false)">
+            <i class="fa-solid fa-location-dot" style="color: var(--alert-red); font-size: 12px;"></i>
+            <span id="destLabel">مستشفى طيبة التخصصي بإسنا</span>
+            <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted); font-size: 12px;"></i>
+          </div>
+        </div>
+
+        <!-- 4 Categories -->
+        <div class="categories-row" id="categoriesRow">
+          <!-- Rendered by JS -->
+        </div>
+
+        <!-- Distance & OSRM Duration Info -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin: 10px 0; font-size: 11px; color: var(--text-muted);">
+          <div style="display: flex; align-items: center; gap: 5px;">
+            <i class="fa-solid fa-route" style="color: var(--primary-lime);"></i>
+            <span id="routeStats">1.8 كم • 5.5 دقيقة (عبر Project OSRM)</span>
+          </div>
+          <select id="paymentSelect" style="background: var(--dark-card); color: #fff; border: 1px solid var(--dark-border); border-radius: 8px; padding: 3px 8px; font-size: 11px;">
+            <option>كاش</option>
+            <option>فودافون كاش</option>
+            <option>إنستا باي</option>
+          </select>
+        </div>
+
+        <!-- inDrive Offer Fare -->
+        <div class="offer-box">
+          <div>
+            <div style="font-size: 10px; color: var(--text-muted);">اعرض الأجرة المناسبة لك:</div>
+            <div class="price-display">
+              <span class="price-num" id="offerPriceDisplay">20</span>
+              <span class="price-currency">ج.م</span>
+            </div>
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <button class="bump-btn" onclick="bumpOffer(5)">+5 ج.م</button>
+            <button class="bump-btn" onclick="bumpOffer(10)">+10 ج.م</button>
+          </div>
+        </div>
+
+        <!-- Order Button -->
+        <button class="main-btn" onclick="startBidding()">
+          <i class="fa-solid fa-handshake"></i>
+          <span>اعرض سعرك واطلب الآن</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Live inDrive Bidding Screen Overlay -->
+    <div class="bidding-panel" id="biddingPanel">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="radar-pulse"></div>
+          <h3 style="font-size: 15px;">عروض الكباتن في إسنا</h3>
+        </div>
+        <button style="background: none; border: none; color: var(--alert-red); font-size: 12px; cursor: pointer;" onclick="cancelBidding()">إلغاء الطلب</button>
+      </div>
+
+      <!-- Route Header -->
+      <div style="background: var(--dark-surface); padding: 10px 14px; border-radius: 14px; margin-bottom: 12px; font-size: 12px; border: 1px solid var(--dark-border);">
+        <div style="color: var(--text-muted); margin-bottom: 4px;">مسار المشوار المطلوب:</div>
+        <div id="biddingRouteText" style="font-weight: 700;">من معبد إسنا إلى مستشفى طيبة</div>
+        <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 13px;">
+          <span>سعرك المعروض: <strong style="color: var(--primary-lime);" id="biddingOfferedPrice">20 ج.م</strong></span>
+          <button class="bump-btn" style="padding: 2px 8px; font-size: 11px;" onclick="bumpOffer(5); syncBiddingPrice();">+5 ج.م لتسريع القبول</button>
+        </div>
+      </div>
+
+      <!-- Stream of Bids -->
+      <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">الكباتن القريبون يقدمون عروضهم:</div>
+      <div id="bidsStreamContainer" style="flex: 1; overflow-y: auto;">
+        <!-- Injected dynamically -->
+      </div>
+    </div>
+
+    <!-- Driver Mode Panel -->
+    <div class="driver-panel" id="driverPanel">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <div>
+          <h3 style="font-size: 16px;">رادار كابتن إسنا</h3>
+          <div style="font-size: 11px; color: var(--text-muted);">توك توك باجاج • إسنا 418</div>
+        </div>
+        <button class="bump-btn" onclick="openDriverQrModal()">
+          <i class="fa-solid fa-qrcode"></i> بطاقة هويتي
+        </button>
+      </div>
+
+      <!-- Wallet strip -->
+      <div style="background: var(--dark-surface); padding: 12px 14px; border-radius: 14px; margin-bottom: 14px; border: 1px solid var(--dark-border); display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <div style="font-size: 11px; color: var(--text-muted);">رصيد المحفظة المتاح:</div>
+          <div style="font-size: 20px; font-weight: 800; color: var(--primary-lime);"><span id="driverWalletBalance">150.0</span> ج.م</div>
+        </div>
+        <button class="bump-btn" onclick="openFawryModal()">شحن فوري (QR)</button>
+      </div>
+
+      <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">الطلبات الحية بدون أي عقوبة (Zero Penalty):</div>
+      <div id="driverRequestsFeed" style="flex: 1; overflow-y: auto;">
+        <!-- Driver orders -->
+      </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div class="admin-panel" id="adminPanel">
+      <h3 style="font-size: 16px; margin-bottom: 12px; color: var(--primary-lime);">إدارة مدينة إسنا درايف</h3>
+      
+      <!-- Metrics -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 16px;">
+        <div style="background: var(--dark-card); padding: 10px; border-radius: 12px; text-align: center;">
+          <div style="font-size: 18px; font-weight: 800; color: var(--primary-lime);">1,248</div>
+          <div style="font-size: 9px; color: var(--text-muted);">إجمالي الرحلات</div>
+        </div>
+        <div style="background: var(--dark-card); padding: 10px; border-radius: 12px; text-align: center;">
+          <div style="font-size: 18px; font-weight: 800; color: #1890ff;">37,400</div>
+          <div style="font-size: 9px; color: var(--text-muted);">حجم التعاملات</div>
+        </div>
+        <div style="background: var(--dark-card); padding: 10px; border-radius: 12px; text-align: center;">
+          <div style="font-size: 18px; font-weight: 800; color: var(--primary-green);">2,618</div>
+          <div style="font-size: 9px; color: var(--text-muted);">عمولة المنصة</div>
+        </div>
+      </div>
+
+      <!-- Commission Control -->
+      <div style="background: var(--dark-surface); padding: 14px; border-radius: 14px; margin-bottom: 14px; border: 1px solid var(--dark-border);">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+          <span style="font-size: 12px; font-weight: 700;">نسبة عمولة المنصة:</span>
+          <span style="font-size: 14px; font-weight: 800; color: var(--primary-lime);" id="adminCommissionLabel">7.0%</span>
+        </div>
+        <input type="range" min="3" max="15" value="7" style="width: 100%; accent-color: var(--primary-lime);" oninput="document.getElementById('adminCommissionLabel').innerText = this.value + '.0%'">
+      </div>
+
+      <!-- Drivers list -->
+      <div style="font-size: 12px; font-weight: 700; margin-bottom: 8px;">اعتماد وتوثيق كباتن إسنا:</div>
+      <div id="adminDriversList">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+
+    <!-- Role Switch Drawer -->
+    <div class="drawer-overlay" id="drawerOverlay" onclick="toggleDrawer()"></div>
+    <div class="drawer" id="sideDrawer">
+      <div class="drawer-user">
+        <img class="drawer-avatar" id="userAvatarImg" src="https://api.dicebear.com/7.x/avataaars/png?seed=user_ahmed" alt="avatar" />
+        <div>
+          <div style="font-weight: 800; font-size: 14px;">أحمد الطيب</div>
+          <div style="font-size: 11px; color: var(--text-muted);">01012345678</div>
+          <div style="font-size: 10px; color: var(--primary-lime);">إسنا • الأقصر</div>
+        </div>
+      </div>
+
+      <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; margin-bottom: 8px;">تبديل وضع التطبيق:</div>
+      <div class="drawer-menu-item active" onclick="switchMode('passenger')">
+        <i class="fa-solid fa-person-walking"></i>
+        <span>وضع الراكب والطرود</span>
+      </div>
+      <div class="drawer-menu-item" onclick="switchMode('driver')">
+        <i class="fa-solid fa-motorcycle"></i>
+        <span>وضع الكابتن والمندوب</span>
+      </div>
+      <div class="drawer-menu-item" onclick="switchMode('admin')">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span>لوحة تحكم إدارة إسنا</span>
+      </div>
+
+      <div style="height: 1px; background: var(--dark-border); margin: 16px 0;"></div>
+      <div class="drawer-menu-item" onclick="openSafetyModal()">
+        <i class="fa-solid fa-handshake"></i>
+        <span>ميثاق شروط وأسعار inDrive</span>
+      </div>
+      <div class="drawer-menu-item" onclick="openSosModal()">
+        <i class="fa-solid fa-shield-cat" style="color: var(--alert-red);"></i>
+        <span>درع الأمان والطوارئ (SOS)</span>
+      </div>
+    </div>
+
+    <!-- Modals (QR, SOS, Fawry) -->
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal-box" id="modalContent"></div>
+    </div>
+
+  </div>
+
+  <script>
+    // 10 Esna Landmarks
+    const landmarks = [
+      { id: 'khnum', name: 'معبد إسنا (معبد خنوم)', lat: 25.2934, lon: 32.5562, desc: 'وسط البلد' },
+      { id: 'corniche', name: 'كورنيش النيل بإسنا', lat: 25.2950, lon: 32.5575, desc: 'شارع البحر' },
+      { id: 'hospital', name: 'مستشفى طيبة التخصصي', lat: 25.2845, lon: 32.5480, desc: 'طريق طيبة' },
+      { id: 'barrage', name: 'قناطر إسنا الجديدة', lat: 25.3160, lon: 32.5540, desc: 'الكوبري السياحي' },
+      { id: 'station', name: 'محطة وموقف إسنا', lat: 25.2910, lon: 32.5450, desc: 'الأقاليم والقطار' },
+      { id: 'orabi', name: 'شارع أحمد عرابي', lat: 25.2905, lon: 32.5535, desc: 'السوق التجاري' },
+      { id: 'deir', name: 'قرية الدير', lat: 25.3250, lon: 32.5780, desc: 'شرق إسنا' },
+      { id: 'hella', name: 'قرية الحلة', lat: 25.2450, lon: 32.5650, desc: 'جنوب شرق' },
+      { id: 'nemsa', name: 'قرية النمسا', lat: 25.2150, lon: 32.5420, desc: 'جنوب إسنا' },
+      { id: 'keman', name: 'قرية كيمان المطاعنة', lat: 25.3850, lon: 32.5120, desc: 'شمال غرب' }
+    ];
+
+    // 4 Categories
+    const categories = [
+      { id: 'toktok', name: 'توك توك', sub: '1-3 ركاب', base: 15, perKm: 5, icon: 'fa-truck-pickup' },
+      { id: 'motorcycle', name: 'موتوسيكل', sub: 'فرد واحد', base: 10, perKm: 3.5, icon: 'fa-motorcycle' },
+      { id: 'marsoul', name: 'مرسول إسنا', sub: 'توصيل طرود', base: 20, perKm: 4, icon: 'fa-box-open' },
+      { id: 'villages', name: 'مشاوير القرى', sub: 'عائلات', base: 25, perKm: 4.5, icon: 'fa-car-side' }
+    ];
+
+    let currentRole = 'passenger';
+    let currentPickup = landmarks[0];
+    let currentDest = landmarks[2];
+    let currentCategory = 'toktok';
+    let currentPrice = 20;
+    let map, routeLayer, pickupMarker, destMarker, movingMarker;
+    let driverWallet = 150.0;
+    let isExtremeHeat = false;
+
+    // Initialize Map on Esna
+    function initMap() {
+      map = L.map('map', { zoomControl: false }).setView([25.2899, 32.5522], 14);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+
+      // Render landmarks bar
+      const bar = document.getElementById('landmarksBar');
+      landmarks.forEach(l => {
+        const chip = document.createElement('div');
+        chip.className = 'landmark-chip';
+        chip.innerHTML = `<i class="fa-solid fa-location-dot"></i> ${l.name}`;
+        chip.onclick = () => {
+          currentDest = l;
+          document.getElementById('destLabel').innerText = l.name;
+          fetchOsrmRoute();
+        };
+        bar.appendChild(chip);
+      });
+
+      // Render category cards
+      const catRow = document.getElementById('categoriesRow');
+      categories.forEach(c => {
+        const div = document.createElement('div');
+        div.className = `category-card ${c.id === currentCategory ? 'selected' : ''}`;
+        div.id = `cat-${c.id}`;
+        div.innerHTML = `
+          <i class="fa-solid ${c.icon}" style="color: var(--primary-lime); font-size: 14px; margin-bottom: 4px;"></i>
+          <div class="cat-title">${c.name}</div>
+          <div class="cat-sub">${c.sub}</div>
+        `;
+        div.onclick = () => selectCategory(c.id);
+        catRow.appendChild(div);
+      });
+
+      fetchOsrmRoute();
+      fetchWeather();
+    }
+
+    // 1. Project OSRM API Call
+    async function fetchOsrmRoute() {
+      const url = `https://router.project-osrm.org/route/v1/driving/${currentPickup.lon},${currentPickup.lat};${currentDest.lon},${currentDest.lat}?overview=full&geometries=geojson`;
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+          const route = data.routes[0];
+          const distKm = (route.distance / 1000).toFixed(1);
+          const durMin = (route.duration / 60).toFixed(1);
+          const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
+
+          renderRouteOnMap(coords);
+          document.getElementById('routeStats').innerText = `${distKm} كم • ${durMin} دقيقة (عبر OSRM)`;
+          recalculatePrice(distKm);
+        }
+      } catch (e) {
+        console.warn('OSRM fallback', e);
+        fallbackRoute();
+      }
+    }
+
+    function renderRouteOnMap(coords) {
+      if (routeLayer) map.removeLayer(routeLayer);
+      if (pickupMarker) map.removeLayer(pickupMarker);
+      if (destMarker) map.removeLayer(destMarker);
+
+      routeLayer = L.polyline(coords, { color: '#A7E92F', weight: 5, opacity: 0.9 }).addTo(map);
+      map.fitBounds(routeLayer.getBounds(), { padding: [40, 40] });
+
+      pickupMarker = L.marker([currentPickup.lat, currentPickup.lon]).addTo(map)
+        .bindPopup(currentPickup.name);
+      destMarker = L.marker([currentDest.lat, currentDest.lon]).addTo(map)
+        .bindPopup(currentDest.name);
+    }
+
+    function fallbackRoute() {
+      const coords = [
+        [currentPickup.lat, currentPickup.lon],
+        [(currentPickup.lat + currentDest.lat)/2 + 0.002, (currentPickup.lon + currentDest.lon)/2],
+        [currentDest.lat, currentDest.lon]
+      ];
+      renderRouteOnMap(coords);
+      recalculatePrice(2.0);
+    }
+
+    function recalculatePrice(distKm) {
+      const cat = categories.find(c => c.id === currentCategory) || categories[0];
+      let p = cat.base + (distKm * cat.perKm);
+      if (isExtremeHeat) p += 5; // heat bonus
+      currentPrice = Math.max(10, Math.round(p / 5) * 5);
+      document.getElementById('offerPriceDisplay').innerText = currentPrice;
+    }
+
+    function selectCategory(id) {
+      currentCategory = id;
+      document.querySelectorAll('.category-card').forEach(el => el.classList.remove('selected'));
+      document.getElementById(`cat-${id}`).classList.add('selected');
+      fetchOsrmRoute();
+    }
+
+    function bumpOffer(val) {
+      currentPrice += val;
+      document.getElementById('offerPriceDisplay').innerText = currentPrice;
+    }
+
+    // 4. Open-Meteo Weather API
+    async function fetchWeather() {
+      try {
+        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=25.2899&longitude=32.5522&current_weather=true');
+        const d = await res.json();
+        const temp = d.current_weather.temperature;
+        isExtremeHeat = temp >= 38.0;
+        document.getElementById('weatherText').innerText = `طقس إسنا الحي: ${temp}°م • ${isExtremeHeat ? 'حر شديد' : 'معتدل'}`;
+        if (isExtremeHeat) {
+          document.getElementById('heatBonusBadge').style.display = 'inline-block';
+        }
+      } catch (_) {}
+    }
+
+    // Live Bidding Stream Simulation
+    let biddingInterval;
+    function startBidding() {
+      document.getElementById('biddingPanel').style.display = 'flex';
+      document.getElementById('biddingRouteText').innerText = `من ${currentPickup.name} إلى ${currentDest.name}`;
+      document.getElementById('biddingOfferedPrice').innerText = currentPrice + ' ج.م';
+      
+      const container = document.getElementById('bidsStreamContainer');
+      container.innerHTML = '<div style="text-align:center; padding: 20px; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> جاري إرسال طلبك لكباتن إسنا...</div>';
+
+      const simulatedCaptains = [
+        { name: 'الأسطى محمود - باجاج 418', seed: 'mahmoud418', vehicle: 'توك توك باجاج', plate: 'إسنا 418', rating: 4.95, eta: 2, price: currentPrice, isCounter: false },
+        { name: 'كابتن أحمد النمساوي', seed: 'ahmed_nemsa', vehicle: 'موتوسيكل دايون 4', plate: 'أ ق ص 891', rating: 4.88, eta: 3, price: currentPrice + 5, isCounter: true },
+        { name: 'الأسطى سيد أبو حجاج', seed: 'sayed_haggag', vehicle: 'توك توك تيفي إس', plate: 'إسنا 102', rating: 4.9, eta: 4, price: currentPrice + 10, isCounter: true }
+      ];
+
+      let count = 0;
+      setTimeout(() => { container.innerHTML = ''; }, 800);
+      biddingInterval = setInterval(() => {
+        if (count < simulatedCaptains.length) {
+          const c = simulatedCaptains[count];
+          const div = document.createElement('div');
+          div.className = `bid-card ${c.isCounter ? 'counter' : ''}`;
+          div.innerHTML = `
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <img src="https://api.dicebear.com/7.x/avataaars/png?seed=${c.seed}" style="width: 44px; height: 44px; border-radius: 50%; background: #121212;" />
+              <div style="flex:1;">
+                <div style="font-weight: 700; font-size: 13px;">${c.name} <i class="fa-solid fa-circle-check" style="color: var(--primary-lime); font-size: 11px;"></i></div>
+                <div style="font-size: 11px; color: var(--text-muted);">${c.vehicle} • ${c.plate}</div>
+                <div style="font-size: 10px; color: var(--warning-orange);"><i class="fa-solid fa-star"></i> ${c.rating} • يصل خلال ${c.eta} دقائق</div>
+              </div>
+              <div style="text-align: left;">
+                <div style="font-size: 18px; font-weight: 800; color: ${c.isCounter ? 'var(--warning-orange)' : 'var(--primary-lime)'};">${c.price} ج.م</div>
+                <div style="font-size: 9px; color: var(--text-muted);">${c.isCounter ? 'عرض مضاد' : 'نفس سعرك'}</div>
+              </div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="main-btn" style="flex: 2; padding: 8px; font-size: 13px;" onclick="acceptBid('${c.name}', ${c.price}, '${c.seed}', '${c.plate}')">قبول العرض</button>
+              <button class="bump-btn" style="flex: 1; border-color: var(--alert-red); color: var(--alert-red);" onclick="this.parentElement.parentElement.remove()">رفض</button>
+            </div>
+          `;
+          container.prepend(div);
+          count++;
+        } else {
+          clearInterval(biddingInterval);
+        }
+      }, 1400);
+    }
+
+    function cancelBidding() {
+      clearInterval(biddingInterval);
+      document.getElementById('biddingPanel').style.display = 'none';
+    }
+
+    function acceptBid(name, price, seed, plate) {
+      cancelBidding();
+      openModal(`
+        <i class="fa-solid fa-circle-check" style="color: var(--primary-lime); font-size: 42px; margin-bottom: 12px;"></i>
+        <h3 style="margin-bottom: 6px;">تم قبول عرض الكابتن!</h3>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">الكابتن <strong>${name}</strong> في الطريق إليك بنقطة الإقلال بإسنا.</p>
+        <div style="background: var(--dark-card); padding: 12px; border-radius: 12px; margin-bottom: 14px;">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=ESNADRIVE:CAPTAIN:${seed}:${plate}" style="width: 140px; height: 140px; border-radius: 8px; background: #fff; padding: 6px;" />
+          <div style="font-size: 11px; color: var(--primary-lime); margin-top: 6px; font-weight: 700;">امسح رمز QR للتحقق من هوية التوك توك</div>
+        </div>
+        <button class="main-btn" onclick="closeModal()">متابعة تتبع الرحلة</button>
+      `);
+    }
+
+    // Role Switching
+    function toggleDrawer() {
+      const d = document.getElementById('sideDrawer');
+      const o = document.getElementById('drawerOverlay');
+      d.classList.toggle('open');
+      o.style.display = d.classList.contains('open') ? 'block' : 'none';
+    }
+
+    function switchMode(role) {
+      currentRole = role;
+      toggleDrawer();
+      document.querySelectorAll('.drawer-menu-item').forEach(el => el.classList.remove('active'));
+      document.getElementById('biddingPanel').style.display = 'none';
+      document.getElementById('driverPanel').style.display = 'none';
+      document.getElementById('adminPanel').style.display = 'none';
+
+      if (role === 'passenger') {
+        document.getElementById('roleText').innerText = 'وضع الراكب';
+      } else if (role === 'driver') {
+        document.getElementById('roleText').innerText = 'وضع الكابتن';
+        document.getElementById('driverPanel').style.display = 'flex';
+        renderDriverFeed();
+      } else if (role === 'admin') {
+        document.getElementById('roleText').innerText = 'إدارة إسنا';
+        document.getElementById('adminPanel').style.display = 'flex';
+        renderAdminDrivers();
+      }
+    }
+
+    function renderDriverFeed() {
+      const feed = document.getElementById('driverRequestsFeed');
+      feed.innerHTML = `
+        <div class="bid-card" style="border-color: var(--dark-border);">
+          <div style="display: flex; justify-content: space-between; font-size: 11px;">
+            <span style="color: var(--primary-lime); font-weight: 700;">توك توك • داخل إسنا</span>
+            <span style="color: var(--text-muted);">1.8 كم • 5 دقائق</span>
+          </div>
+          <div style="font-size: 13px; font-weight: 700; margin: 4px 0;">من معبد إسنا (وسط البلد) إلى مستشفى طيبة</div>
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <span style="font-size: 11px; color: var(--text-muted);">أجرة الراكب:</span>
+            <strong style="font-size: 20px; color: var(--primary-lime);">20 ج.م</strong>
+          </div>
+          <div style="display: flex; gap: 6px; margin-top: 6px;">
+            <button class="main-btn" style="flex: 2; padding: 8px; font-size: 12px;" onclick="driverAcceptRide(20)">قبول بسعر الراكب (20 ج.م)</button>
+            <button class="bump-btn" onclick="driverAcceptRide(25)">+5 ج.م</button>
+            <button class="bump-btn" onclick="this.parentElement.parentElement.remove()" style="border-color: var(--dark-border); color: var(--text-muted);">تخطي</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function driverAcceptRide(price) {
+      const commission = (price * 0.07).toFixed(1);
+      driverWallet -= parseFloat(commission);
+      document.getElementById('driverWalletBalance').innerText = driverWallet.toFixed(1);
+      openModal(`
+        <i class="fa-solid fa-map-location-dot" style="color: var(--primary-lime); font-size: 38px; margin-bottom: 10px;"></i>
+        <h3>تم قبول الطلب!</h3>
+        <p style="font-size: 12px; color: var(--text-muted); margin: 8px 0;">خصمت عمولة المنصة 7% تلقائياً (${commission} ج.م).</p>
+        <button class="main-btn" style="background: var(--primary-green); margin-bottom: 8px;" onclick="closeModal()">لقد وصلتُ لنقطة الإقلال</button>
+        <button class="main-btn" onclick="closeModal()">إنهاء المشوار واستلام ${price} ج.م كاش</button>
+      `);
+    }
+
+    function renderAdminDrivers() {
+      const list = document.getElementById('adminDriversList');
+      list.innerHTML = `
+        <div style="background: var(--dark-card); padding: 12px; border-radius: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-weight: 700; font-size: 13px;">محمود عبد الرازق (الأسطى حودة)</div>
+            <div style="font-size: 11px; color: var(--text-muted);">توك توك باجاج • لوحة: إسنا 418</div>
+          </div>
+          <span style="background: rgba(45, 190, 96, 0.2); color: var(--primary-green); font-size: 11px; padding: 4px 8px; border-radius: 8px; font-weight: 700;">معتمد بالوحدة المحلية</span>
+        </div>
+      `;
+    }
+
+    function openDriverQrModal() {
+      openModal(`
+        <h3 style="margin-bottom: 6px;">بطاقة هوية الكابتن (EsnaDrive ID)</h3>
+        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 14px;">البديل الرقمي للوحة المعدنية لمركبات إسنا</p>
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=ESNA-DRIVER-MAHMOUD-418" style="width: 170px; height: 170px; border-radius: 12px; background: #fff; padding: 8px; margin-bottom: 16px;" />
+        <button class="main-btn" onclick="closeModal()">إغلاق</button>
+      `);
+    }
+
+    function openFawryModal() {
+      const code = '982' + Math.floor(100000 + Math.random() * 900000);
+      openModal(`
+        <h3 style="margin-bottom: 6px;">شحن المحفظة عبر فوري (Fawry Pay)</h3>
+        <p style="font-size: 12px; color: var(--text-muted);">أعطِ كود الدفع التالي لأي منفذ فوري في إسنا:</p>
+        <div style="font-size: 26px; font-weight: 900; color: var(--primary-lime); letter-spacing: 4px; padding: 12px; background: var(--dark-card); border-radius: 12px; margin: 12px 0;">${code}</div>
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=FAWRY:REF:${code}:AMOUNT:100" style="width: 130px; height: 130px; border-radius: 8px; background: #fff; padding: 6px; margin-bottom: 14px;" />
+        <button class="main-btn" onclick="driverWallet += 100; document.getElementById('driverWalletBalance').innerText = driverWallet.toFixed(1); closeModal();">تم الشحن بمبلغ 100 ج.م</button>
+      `);
+    }
+
+    function openSosModal() {
+      toggleDrawer();
+      openModal(`
+        <i class="fa-solid fa-shield-halved" style="color: var(--alert-red); font-size: 38px; margin-bottom: 10px;"></i>
+        <h3 style="color: var(--alert-red); margin-bottom: 6px;">درع الأمان والطوارئ (SOS)</h3>
+        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 14px;">اتصال فوري أو مشاركة الرحلة لحمايتك في إسنا</p>
+        <a href="tel:122" class="main-btn" style="background: var(--alert-red); color: #fff; text-decoration: none; margin-bottom: 8px;"><i class="fa-solid fa-phone"></i> شرطة النجدة (122)</a>
+        <a href="tel:123" class="main-btn" style="background: var(--warning-orange); color: #000; text-decoration: none; margin-bottom: 12px;"><i class="fa-solid fa-truck-medical"></i> الإسعاف المصري (123)</a>
+        <button class="bump-btn" style="width: 100%; padding: 10px;" onclick="closeModal()">إلغاء</button>
+      `);
+    }
+
+    function openSafetyModal() {
+      toggleDrawer();
+      openModal(`
+        <i class="fa-solid fa-handshake" style="color: var(--primary-lime); font-size: 38px; margin-bottom: 10px;"></i>
+        <h3 style="margin-bottom: 8px;">ميثاق تسعير inDrive بإسنا</h3>
+        <p style="font-size: 11px; color: var(--text-muted); text-align: right; line-height: 1.6; margin-bottom: 14px;">
+          السعر المتفق عليه نهائي وملزم، ولا يجوز زيادته إلا في الحالات الـ 4 التالية:<br>
+          1. تغيير المسار لمسافة أطول.<br>
+          2. تعديل أو إضافة وجهة جديدة.<br>
+          3. انتظار مجاني يتعدى 5 دقائق.<br>
+          4. التوقف أثناء الرحلة لقضاء طلبات.
+        </p>
+        <button class="main-btn" onclick="closeModal()">فهمت وموافق</button>
+      `);
+    }
+
+    function openModal(html) {
+      document.getElementById('modalContent').innerHTML = html;
+      document.getElementById('modalBackdrop').style.display = 'flex';
+    }
+    function closeModal() {
+      document.getElementById('modalBackdrop').style.display = 'none';
+    }
+
+    document.getElementById('openDrawerBtn').onclick = toggleDrawer;
+    window.onload = initMap;
+  </script>
+</body>
+</html>
