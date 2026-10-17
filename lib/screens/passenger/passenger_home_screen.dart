@@ -498,6 +498,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   void _openSearchDialog(BuildContext context, {required bool isPickup, required RideProvider rideProv, required bool isExtremeHeat}) {
     showDialog(
       context: context,
+      builder: (context) {
         List<EsnaPlace> searchResults = [];
         bool isSearching = false;
 
